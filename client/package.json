@@ -27,9 +27,11 @@
     "@tanstack/router-plugin": "^1.132.0",
     "framer-motion": "^12.41.0",
     "lucide-react": "^0.545.0",
+    "nitro": "^3.0.260610-beta",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwindcss": "^4.1.18",
+    "vite-tsconfig-paths": "^6.1.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {
