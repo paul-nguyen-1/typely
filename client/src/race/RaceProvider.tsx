@@ -1,22 +1,23 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
 } from 'react'
 import { createTypingEngine } from '#/engine/engine'
 import { RaceClock } from '#/engine/clock'
 import type { InputEvent, RaceState, TypingEngine } from '#/engine/types'
-
-const TICK_MS = 200
+import { useRaceLoop } from './useRaceLoop'
+import { TRACK_WIDTH_PX } from './Track'
 
 interface RaceContextValue {
   passage: string
   raceState: RaceState
   applyEvent: (e: InputEvent) => void
   now: () => number
+  carRef: RefObject<HTMLDivElement | null>
 }
 
 const RaceContext = createContext<RaceContextValue | null>(null)
@@ -48,17 +49,19 @@ export function RaceProvider({
   }
   const clock = clockRef.current
 
+  const carRef = useRef<HTMLDivElement>(null)
+
   const [raceState, setRaceState] = useState<RaceState>(() =>
     engine.sample(clock.now()),
   )
 
-  useEffect(() => {
-    if (raceState.status !== 'running') return
-    const id = setInterval(() => {
-      setRaceState(engine.sample(clock.now()))
-    }, TICK_MS)
-    return () => clearInterval(id)
-  }, [raceState.status, engine, clock])
+  useRaceLoop({
+    engine,
+    clock,
+    carRef,
+    trackWidthPx: TRACK_WIDTH_PX,
+    onSnapshot: setRaceState,
+  })
 
   function applyEvent(e: InputEvent) {
     setRaceState(engine.apply(e))
@@ -66,7 +69,7 @@ export function RaceProvider({
 
   return (
     <RaceContext.Provider
-      value={{ passage, raceState, applyEvent, now: () => clock.now() }}
+      value={{ passage, raceState, applyEvent, now: () => clock.now(), carRef }}
     >
       {children}
     </RaceContext.Provider>
