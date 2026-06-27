@@ -6,6 +6,7 @@ import { TypingSurface } from './TypingSurface'
 import { StatsHUD } from './StatsHUD'
 import { Track } from './Track'
 import { RacerCar } from './RacerCar'
+import { GhostCar } from './GhostCar'
 
 const SAMPLE_PASSAGE = 'the quick brown fox jumps over the lazy dog'
 
@@ -19,6 +20,7 @@ export function Race() {
         <StatsHUD />
         <Track>
           <RacerCar />
+          <GhostCar />
         </Track>
         <PassageView />
         <TypingSurface disabled={!ready} />

@@ -8,9 +8,12 @@ import {
 } from 'react'
 import { createTypingEngine } from '#/engine/engine'
 import { RaceClock } from '#/engine/clock'
-import type { InputEvent, RaceState, TypingEngine } from '#/engine/types'
+import { createRngGhostSource } from '#/engine/ghost'
+import type { InputEvent, OpponentSource, RaceState, TypingEngine } from '#/engine/types'
 import { useRaceLoop } from './useRaceLoop'
 import { TRACK_WIDTH_PX } from './Track'
+
+const GHOST_TARGET_WPM = 50
 
 interface RaceContextValue {
   passage: string
@@ -18,6 +21,8 @@ interface RaceContextValue {
   applyEvent: (e: InputEvent) => void
   now: () => number
   carRef: RefObject<HTMLDivElement | null>
+  ghostCarRef: RefObject<HTMLDivElement | null>
+  seed: number
 }
 
 const RaceContext = createContext<RaceContextValue | null>(null)
@@ -50,6 +55,22 @@ export function RaceProvider({
   const clock = clockRef.current
 
   const carRef = useRef<HTMLDivElement>(null)
+  const ghostCarRef = useRef<HTMLDivElement>(null)
+
+  const seedRef = useRef<number | null>(null)
+  if (seedRef.current === null) seedRef.current = Math.floor(Math.random() * 2 ** 31)
+  const seed = seedRef.current
+
+  const ghostRef = useRef<OpponentSource | null>(null)
+  if (!ghostRef.current) {
+    ghostRef.current = createRngGhostSource({
+      id: 'ghost',
+      seed,
+      passage,
+      targetWpm: GHOST_TARGET_WPM,
+    })
+  }
+  const ghost = ghostRef.current
 
   const [raceState, setRaceState] = useState<RaceState>(() =>
     engine.sample(clock.now()),
@@ -59,6 +80,8 @@ export function RaceProvider({
     engine,
     clock,
     carRef,
+    ghost,
+    ghostCarRef,
     trackWidthPx: TRACK_WIDTH_PX,
     onSnapshot: setRaceState,
   })
@@ -69,7 +92,15 @@ export function RaceProvider({
 
   return (
     <RaceContext.Provider
-      value={{ passage, raceState, applyEvent, now: () => clock.now(), carRef }}
+      value={{
+        passage,
+        raceState,
+        applyEvent,
+        now: () => clock.now(),
+        carRef,
+        ghostCarRef,
+        seed,
+      }}
     >
       {children}
     </RaceContext.Provider>

@@ -15,7 +15,9 @@ test('countdown unlocks input, typing updates stats, finishing shows finished st
   await expect(input).toBeFocused()
 
   const car = page.getByTestId('racer-car')
+  const ghostCar = page.getByTestId('ghost-car')
   const startTransform = await car.evaluate((el) => el.style.transform)
+  const ghostStartTransform = await ghostCar.evaluate((el) => el.style.transform)
 
   await page.keyboard.type(PASSAGE, { delay: 20 })
 
@@ -27,4 +29,8 @@ test('countdown unlocks input, typing updates stats, finishing shows finished st
   const endTransform = await car.evaluate((el) => el.style.transform)
   expect(endTransform).not.toBe(startTransform)
   expect(endTransform).toContain('translateX(600px)') // TRACK_WIDTH_PX at 100% progress
+
+  // the ghost car moves independently via the same hot-path discipline
+  const ghostEndTransform = await ghostCar.evaluate((el) => el.style.transform)
+  expect(ghostEndTransform).not.toBe(ghostStartTransform)
 })

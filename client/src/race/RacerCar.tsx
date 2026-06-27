@@ -7,7 +7,7 @@ export function RacerCar() {
     <div
       ref={carRef}
       data-testid="racer-car"
-      className="absolute top-1/2 left-0 h-6 w-6 -translate-y-1/2 rounded-full bg-blue-600"
+      className="absolute top-1/4 left-0 h-6 w-6 -translate-y-1/2 rounded-full bg-blue-600"
     />
   )
 }
