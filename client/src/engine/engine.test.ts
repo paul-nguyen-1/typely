@@ -50,26 +50,27 @@ describe('createTypingEngine — known sequence', () => {
       wpm: 1 / 5 / (1100 / 60000),
     })
 
-    // backspace erases the wrong char and its error flag
+    // backspace erases the visual error flag, but the mistake still counts
+    // against cumulative accuracy (1 mistake / 2 keystrokes so far)
     state = engine.apply({ kind: 'backspace', t: 1200 })
     expectState(state, {
       status: 'running',
       cursor: 1,
       errors: [],
       progress: 1 / 3,
-      accuracy: 1,
+      accuracy: 0.5,
       elapsedMs: 1200,
       wpm: 1 / 5 / (1200 / 60000),
     })
 
-    // retype 'a' correctly
+    // retype 'a' correctly — accuracy improves but doesn't erase the earlier mistake
     state = engine.apply({ kind: 'char', char: 'a', t: 1300 })
     expectState(state, {
       status: 'running',
       cursor: 2,
       errors: [],
       progress: 2 / 3,
-      accuracy: 1,
+      accuracy: 2 / 3,
       elapsedMs: 1300,
       wpm: 2 / 5 / (1300 / 60000),
     })
@@ -81,7 +82,7 @@ describe('createTypingEngine — known sequence', () => {
       cursor: 3,
       errors: [],
       progress: 1,
-      accuracy: 1,
+      accuracy: 0.75,
       elapsedMs: 2000,
       wpm: 3 / 5 / (2000 / 60000),
     })
@@ -101,6 +102,18 @@ describe('createTypingEngine — edge cases', () => {
 
     const sampled = engine.sample(50_000)
     expect(sampled.elapsedMs).toBe(1000)
+  })
+
+  it('accuracy is cumulative — correcting a mistake via backspace does not heal it', () => {
+    const engine = createTypingEngine('cat')
+    engine.apply({ kind: 'char', char: 'c', t: 0 }) // correct
+    engine.apply({ kind: 'char', char: 'x', t: 100 }) // mistake (expected 'a')
+    engine.apply({ kind: 'backspace', t: 200 })
+    const state = engine.apply({ kind: 'char', char: 'a', t: 300 }) // corrected
+
+    expect(state.cursor).toBe(2)
+    expect(state.errors.size).toBe(0) // no *currently visible* error
+    expect(state.accuracy).toBeCloseTo(2 / 3, 10) // but the mistake still counts
   })
 
   it('treats backspace at cursor 0 as a no-op (cursor/errors unaffected)', () => {

@@ -13,6 +13,8 @@ export function createTypingEngine(passage: string): TypingEngine {
 
   let cursor = 0
   let errors = new Set<number>()
+  let totalKeystrokes = 0
+  let totalMistakes = 0
   let startTime: number | null = null
   let endTime: number | null = null
 
@@ -27,10 +29,10 @@ export function createTypingEngine(passage: string): TypingEngine {
   }
 
   function accuracy(): number {
-    if (cursor === 0) {
+    if (totalKeystrokes === 0) {
       return 1
     }
-    return (cursor - errors.size) / cursor
+    return (totalKeystrokes - totalMistakes) / totalKeystrokes
   }
 
   function wpm(elapsedMs: number): number {
@@ -68,7 +70,11 @@ export function createTypingEngine(passage: string): TypingEngine {
           errors.delete(cursor)
         }
       } else if (cursor < length) {
-        if (graphemes[cursor] !== e.char) errors.add(cursor)
+        totalKeystrokes += 1
+        if (graphemes[cursor] !== e.char) {
+          errors.add(cursor)
+          totalMistakes += 1
+        }
         cursor += 1
         if (cursor === length) endTime = e.t
       }
@@ -83,6 +89,8 @@ export function createTypingEngine(passage: string): TypingEngine {
     reset(): void {
       cursor = 0
       errors = new Set()
+      totalKeystrokes = 0
+      totalMistakes = 0
       startTime = null
       endTime = null
     },
